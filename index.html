@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>輪宴</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="stage"></canvas>
+      <canvas id="ink" hidden></canvas>
+      <div id="vignette"></div>
+
+      <header class="hud" id="hud" hidden>
+        <button type="button" id="btn-back" class="chip">卓へ</button>
+        <p class="hud-center">
+          <span id="hud-kicker">いま</span>
+          <strong id="hud-title">輪宴</strong>
+        </p>
+        <p class="hud-score" id="hud-score"></p>
+      </header>
+
+      <p class="toast" id="toast" hidden></p>
+
+      <section id="title-screen" class="overlay" aria-hidden="false">
+        <div class="card title-card">
+          <p class="kicker">ミニゲーム盛り合わせ</p>
+          <h1>輪宴</h1>
+          <p class="sub">RING PARTY</p>
+          <p class="lead">
+            卓を回す種目がたくさん。おまかせで次のゲームへ。オンラインは全員同時に指で競う。
+          </p>
+          <label class="field">
+            あなたの名前
+            <input id="my-name" maxlength="8" placeholder="なまえ" autocomplete="nickname" />
+          </label>
+          <button type="button" id="btn-start" class="btn-main">この場で</button>
+          <button type="button" id="btn-online" class="btn-main btn-online">オンライン</button>
+          <button type="button" id="btn-how" class="btn-ghost">あそび方</button>
+        </div>
+      </section>
+
+      <section id="how-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker">あそび方</p>
+          <h2>卓の上をタップ</h2>
+          <ul class="how-list">
+            <li><b>この場で</b> … 60種。負けた人が罰。おまかせで卓が選ぶ。</li>
+            <li><b>オンライン</b> … 60種。全員が同じ制限時間で点数を競う。</li>
+          </ul>
+          <p class="hint">横持ちでも縦持ちでも遊べます。音は最初のタップで鳴ります。</p>
+          <button type="button" id="btn-how-close" class="btn-main">わかった</button>
+        </div>
+      </section>
+
+      <section id="online-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker">遠席</p>
+          <h2>オンライン</h2>
+          <label class="field">
+            あなたの名前
+            <input id="online-name" maxlength="8" placeholder="なまえ" autocomplete="nickname" />
+          </label>
+          <button type="button" id="btn-host" class="btn-main">部屋をつくる</button>
+          <div class="join-row">
+            <input id="online-code" maxlength="4" placeholder="コード" spellcheck="false" />
+            <button type="button" id="btn-join" class="btn-ghost">入室</button>
+          </div>
+          <button type="button" id="btn-online-back" class="btn-ghost">戻る</button>
+        </div>
+      </section>
+
+      <section id="lobby-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker">部屋コード</p>
+          <button type="button" id="btn-copy-code" class="room-code" aria-label="コードをコピー">----</button>
+          <p class="hint" id="lobby-hint">友人にコードを伝えて入室してもらう</p>
+          <ul id="lobby-list" class="lobby-list"></ul>
+          <label class="field">
+            あなたの名前
+            <input id="lobby-name" maxlength="8" placeholder="なまえ" autocomplete="nickname" />
+          </label>
+          <button type="button" id="btn-lobby-rename" class="btn-ghost">名前を変える</button>
+          <button type="button" id="btn-lobby-table" class="btn-main">卓を出す</button>
+          <button type="button" id="btn-lobby-leave" class="btn-ghost">部屋を出る</button>
+        </div>
+      </section>
+
+      <section id="name-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker">呼び名</p>
+          <h2>名前を変える</h2>
+          <label class="field">
+            あなたの名前
+            <input id="name-edit" maxlength="8" placeholder="なまえ" autocomplete="nickname" />
+          </label>
+          <button type="button" id="btn-name-ok" class="btn-main">決める</button>
+          <button type="button" id="btn-name-back" class="btn-ghost">戻る</button>
+        </div>
+      </section>
+
+      <section id="players-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker">席につく</p>
+          <h2>だれが遊ぶ</h2>
+          <div id="player-list" class="player-list"></div>
+          <button type="button" id="btn-add" class="btn-ghost">席を足す</button>
+          <button type="button" id="btn-to-table" class="btn-main">卓を出す</button>
+        </div>
+      </section>
+
+      <section id="hub-hint" class="dock" hidden>
+        <p id="hub-copy">卓のものをタップ、または下のボタン</p>
+        <button type="button" id="btn-hub-name" class="btn-ghost btn-name">名前を変える</button>
+        <div class="game-grid" id="game-grid"></div>
+      </section>
+
+      <section id="play-dock" class="dock" hidden>
+        <p class="secret" id="secret-card" hidden></p>
+        <p class="who" id="play-who"></p>
+        <p class="prompt" id="play-prompt"></p>
+        <div class="vote-row" id="vote-row" hidden></div>
+        <button type="button" id="btn-action" class="btn-main">タップ</button>
+      </section>
+
+      <div id="versus-ui" hidden>
+        <div class="versus-line"></div>
+        <div class="versus-banner versus-far">
+          <strong id="versus-far-name">—</strong>
+          <span id="versus-far-hp"></span>
+          <em>ドラッグで走る・タップで斬る</em>
+        </div>
+        <div class="versus-banner versus-near">
+          <strong id="versus-near-name">—</strong>
+          <span id="versus-near-hp"></span>
+          <em>ドラッグで走る・タップで斬る</em>
+        </div>
+      </div>
+
+      <section id="result-screen" class="overlay" hidden aria-hidden="true">
+        <div class="card">
+          <p class="kicker" id="result-kicker">決着</p>
+          <h2 id="result-title">—</h2>
+          <p class="lead" id="result-lead"></p>
+          <p class="dare" id="result-dare" hidden></p>
+          <div class="result-actions">
+            <button type="button" id="btn-again" class="btn-main">もういちど</button>
+            <button type="button" id="btn-result-hub" class="btn-ghost">卓へ戻る</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
